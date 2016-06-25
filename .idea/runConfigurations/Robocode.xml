@@ -2,7 +2,7 @@
   <configuration default="false" name="Robocode" type="Application" factoryName="Application" singleton="true">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="robocode.Robocode" />
-    <option name="VM_PARAMETERS" value="-Xmx512M -Dsun.io.useCanonCaches=false -Ddebug=true" />
+    <option name="VM_PARAMETERS" value="-Xmx512M -Dsun.io.useCanonCaches=false -Ddebug=true -DNOSECURITY=true" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://C:/robocode" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
