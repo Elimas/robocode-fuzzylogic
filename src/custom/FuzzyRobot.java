@@ -1,6 +1,8 @@
 package custom;
 
 import com.fuzzylite.Engine;
+import com.fuzzylite.norm.s.Maximum;
+import com.fuzzylite.norm.t.Minimum;
 import com.fuzzylite.rule.Rule;
 import com.fuzzylite.rule.RuleBlock;
 import com.fuzzylite.term.Triangle;
@@ -14,9 +16,6 @@ import java.util.ArrayList;
 
 import static custom.Utils.*;
 
-/**
- * Created by Elimas on 2016-06-23.
- */
 public class FuzzyRobot extends AdvancedRobot {
 
     private static final int DMG_TIME_S = 5;
@@ -28,6 +27,7 @@ public class FuzzyRobot extends AdvancedRobot {
 
     private Engine engine;
     private InputVariable dmgTaken = new InputVariable();
+    private InputVariable enemyDistance = new InputVariable();
     private OutputVariable runSpeed = new OutputVariable();
     private InputVariable enemyDistanceInput = new InputVariable();
     private OutputVariable firepowerOutput = new OutputVariable();
@@ -48,6 +48,13 @@ public class FuzzyRobot extends AdvancedRobot {
         dmgTaken.addTerm(new Triangle("High", 0.5, 0.75, 1));
         engine.addInputVariable(dmgTaken);
 
+        enemyDistance.setName("EnemyDistance");
+        enemyDistance.setRange(0.0, 1200.0); //1200px - maksymalny zasieg radaru
+        enemyDistance.addTerm(new Triangle("Short", 0, 300, 600));
+        enemyDistance.addTerm(new Triangle("Medium", 300, 600, 800));
+        enemyDistance.addTerm(new Triangle("Far", 600, 800, 1200));
+        engine.addInputVariable(enemyDistance);
+
         runSpeed = new OutputVariable();
         runSpeed.setDefaultValue(Double.NaN);
         runSpeed.setName("RunSpeed");
@@ -58,8 +65,11 @@ public class FuzzyRobot extends AdvancedRobot {
         engine.addOutputVariable(runSpeed);
 
         RuleBlock ruleBlock = new RuleBlock();
-        ruleBlock.addRule(Rule.parse("if DmgTaken is Low then RunSpeed is Low", engine));
-        ruleBlock.addRule(Rule.parse("if DmgTaken is Medium then RunSpeed is Medium", engine));
+        ruleBlock.setConjunction(new Minimum());
+        ruleBlock.setDisjunction(new Maximum());
+
+        ruleBlock.addRule(Rule.parse("if DmgTaken is Low and EnemyDistance is Far then RunSpeed is Low", engine));
+        ruleBlock.addRule(Rule.parse("if DmgTaken is Medium or EnemyDistance is Medium then RunSpeed is Medium", engine));
         ruleBlock.addRule(Rule.parse("if DmgTaken is High then RunSpeed is High", engine));
         engine.addRuleBlock(ruleBlock);
 
@@ -125,6 +135,9 @@ public class FuzzyRobot extends AdvancedRobot {
     @Override
     public void onScannedRobot(ScannedRobotEvent e) {
         setTurnRight(e.getBearing() + 90);
+
+        enemyDistance.setInputValue(e.getDistance());
+        System.out.println(e.getDistance());
 
         if ( enemy.none() || e.getDistance() < enemy.getDistance() - 70 || e.getName().equals(enemy.getName())) {
             enemy.update(e, this);
