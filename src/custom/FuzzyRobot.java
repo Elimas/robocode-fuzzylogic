@@ -73,27 +73,26 @@ public class FuzzyRobot extends AdvancedRobot {
         ruleBlock.addRule(Rule.parse("if DmgTaken is High then RunSpeed is High", engine));
         engine.addRuleBlock(ruleBlock);
 
-        enemyDistanceInput = new InputVariable();
         enemyDistanceInput.setName("EnemyDistance");
-        enemyDistanceInput.setRange(0.000, 1.000);
-        enemyDistanceInput.addTerm(new Triangle("Short", 0, 0.25, 0.5));
-        enemyDistanceInput.addTerm(new Triangle("Medium", 0.25, 0.5, 0.7));
-        enemyDistanceInput.addTerm(new Triangle("Long", 0.5, 0.75, 1));
+        enemyDistanceInput.setRange(0.0, 600); //1200px - maksymalny zasieg radaru
+        enemyDistanceInput.addTerm(new Triangle("Short", 0, 300, 600));
+        enemyDistanceInput.addTerm(new Triangle("Medium", 300, 600, 800));
+        enemyDistanceInput.addTerm(new Triangle("Far", 600, 800, 1200));
         engine.addInputVariable(enemyDistanceInput);
 
         firepowerOutput = new OutputVariable();
-        firepowerOutput.setDefaultValue(Double.NaN);
+        firepowerOutput.setDefaultValue(1);
         firepowerOutput.setName("Firepower");
-        firepowerOutput.setRange(0.000, 1.000);
-        firepowerOutput.addTerm(new Triangle("Low", 0, 0.25, 0.5));
-        firepowerOutput.addTerm(new Triangle("Medium", 0.25, 0.5, 0.7));
-        firepowerOutput.addTerm(new Triangle("High", 0.5, 0.75, 1));
+        firepowerOutput.setRange(1.000, 3.000);
+        firepowerOutput.addTerm(new Triangle("Low", 1, 2, 2.5));
+        firepowerOutput.addTerm(new Triangle("Medium", 2, 2.25, 2.5));
+        firepowerOutput.addTerm(new Triangle("High", 2.3, 2.5, 3));
         engine.addOutputVariable(firepowerOutput);
 
         RuleBlock ruleBlockFirepower = new RuleBlock();
         ruleBlockFirepower.addRule(Rule.parse("if EnemyDistance is Short then Firepower is High", engine));
         ruleBlockFirepower.addRule(Rule.parse("if EnemyDistance is Medium then Firepower is Medium", engine));
-        ruleBlockFirepower.addRule(Rule.parse("if EnemyDistance is Long then Firepower is Low", engine));
+        ruleBlockFirepower.addRule(Rule.parse("if EnemyDistance is Far then Firepower is Low", engine));
         engine.addRuleBlock(ruleBlockFirepower);
 
         engine.configure("Minimum", "Maximum", "Minimum", "Maximum", "Centroid");
@@ -137,7 +136,7 @@ public class FuzzyRobot extends AdvancedRobot {
         setTurnRight(e.getBearing() + 90);
 
         enemyDistance.setInputValue(e.getDistance());
-        System.out.println(e.getDistance());
+        engine.process();
 
         if ( enemy.none() || e.getDistance() < enemy.getDistance() - 70 || e.getName().equals(enemy.getName())) {
             enemy.update(e, this);
@@ -177,9 +176,7 @@ public class FuzzyRobot extends AdvancedRobot {
         if (enemy.none())
             return;
 
-        enemyDistanceInput.setInputValue(Utils.clamp(enemy.getDistance() / Math.max(getBattleFieldHeight(), getBattleFieldWidth()), 0, 1));
-        engine.process();
-        double firePower = Double.isNaN(firepowerOutput.getOutputValue()) ? 1 : Utils.clamp(firepowerOutput.getOutputValue() * 4, 1, 3);
+        double firePower = Double.isNaN(firepowerOutput.getOutputValue()) ? 1 : Utils.clamp(firepowerOutput.getOutputValue(), 1, 3);
         System.out.println("FP: " + firePower);
         double bulletSpeed = 20 - firePower * 3;
         long time = (long)(enemy.getDistance() / bulletSpeed);
